@@ -10,13 +10,27 @@ public class Player : MonoBehaviour
     [Header("Local Multiplayer Settings")]
     [SerializeField] private bool isPlayerOne = true;
 
+    [Header("Snowball Growth Settings")]
+    [SerializeField] private float snowballGrowthSpeed = 0.5f;
+    private float currentScale;
+    private float startingScale;
+
+    [Header("Push Settings")]
+    [SerializeField] private float pushDamagePercent = 10f;
+    [SerializeField] private float basePushForce = 5f;
+    [SerializeField] private float pushForceLinearGrowth = 1f;
+
     [Header("Movement Settings")]
     [SerializeField] private float baseMoveSpeed = 3f;
     private float moveSpeedModifier = 1f;
     private float totalMoveSpeed => baseMoveSpeed * moveSpeedModifier;
     private Vector3 movementDirection;
 
-    private bool isMoving => movementDirection != Vector3.zero;
+    [Header("Stun Settings")]
+    [SerializeField] private float stunDuration = 1f;
+
+    [Header("Death Settings")]
+    [SerializeField] private float deathDuration = 1f;
 
     #region State Machine
     public enum State
@@ -27,28 +41,82 @@ public class Player : MonoBehaviour
         Dead
     }
     
-    public State CurrentState { get; private set; }
+    [field: SerializeField] public State CurrentState { get; private set; }
 
     private void ChangeState(State newState)
     {
         OnExitState(CurrentState);
-        newState = CurrentState;
+        CurrentState = newState;
         OnEnterState(CurrentState);
     }
 
     private void OnEnterState(State state)
     {
-
+        switch (state)
+        {
+            case State.Idle:
+                break;
+            case State.Move:
+                break;
+            case State.Stunned:
+                break;
+            case State.Dead:
+                break;
+            default:
+                break;
+        }
     }
 
     private void OnExitState(State state)
     {
-
+        switch (state)
+        {
+            case State.Idle:
+                break;
+            case State.Move:
+                break;
+            case State.Stunned:
+                break;
+            case State.Dead:
+                break;
+            default:
+                break;
+        }
     }
 
     private void UpdateState(State state)
     {
+        switch (state)
+        {
+            case State.Idle:
+                HandleMovementInput();
 
+                if (movementDirection != Vector3.zero)
+                {
+                    ChangeState(State.Move);
+                    return;
+                }
+
+                break;
+            case State.Move:
+                HandleMovementInput();
+
+                if(movementDirection == Vector3.zero)
+                {
+                    ChangeState(State.Idle);
+                    return;
+                }
+
+                currentScale += snowballGrowthSpeed * Time.deltaTime;
+
+                break;
+            case State.Stunned:
+                break;
+            case State.Dead:
+                break;
+            default:
+                break;
+        }
     }
 
     private void FixedUpdateState(State state)
@@ -56,8 +124,10 @@ public class Player : MonoBehaviour
         switch (state)
         {
             case State.Idle:
+                
                 break;
             case State.Move:
+                ApplyMovement();
                 break;
             case State.Stunned:
                 break;
@@ -74,14 +144,38 @@ public class Player : MonoBehaviour
         rigidBody = GetComponent<Rigidbody>();
     }
 
+    private void Start()
+    {
+        currentScale = transform.localScale.x;
+        startingScale = currentScale;
+
+        ChangeState(State.Idle);
+    }
+
     private void Update()
     {
         UpdateState(CurrentState);
+
+        HandleCurrentScale();
     }
 
     private void FixedUpdate()
     {
         FixedUpdateState(CurrentState);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if(collision.gameObject.TryGetComponent(out Player otherPlayer))
+        {
+            Vector3 directionToOtherPlayer = (otherPlayer.transform.position - transform.position).normalized;
+
+            // if not attacking, don't push other player
+            if (CurrentState == State.Idle || Vector3.Dot(movementDirection, directionToOtherPlayer) < 0) return;
+
+            otherPlayer.Push(directionToOtherPlayer, basePushForce + currentScale * pushForceLinearGrowth);
+            otherPlayer.TakeDamage(pushDamagePercent);
+        }
     }
 
     private void HandleMovementInput()
@@ -114,8 +208,30 @@ public class Player : MonoBehaviour
         movementDirection = direction.normalized;
     }
 
-    private void Move()
+    private void ApplyMovement()
     {
         rigidBody.MovePosition(transform.position + Time.fixedDeltaTime * totalMoveSpeed * movementDirection);
+    }
+
+    private void HandleCurrentScale()
+    {
+        transform.localScale = currentScale * Vector3.one;
+
+        rigidBody.mass = 4f/3f * Mathf.PI * Mathf.Pow(currentScale/2f, 3);
+    }
+
+    /// <summary>
+    /// Applies a push force to the player in the specified direction.
+    /// </summary>
+    /// <param name="direction">The direction in which to apply the force.</param>
+    /// <param name="force">The magnitude of the force to apply.</param>
+    public void Push(Vector3 direction, float force)
+    {
+        rigidBody.AddForce(force * direction.normalized, ForceMode.Impulse);
+    }
+
+    public void TakeDamage(float damagePercent)
+    {
+        currentScale = Mathf.Max(startingScale, currentScale * (1f - damagePercent / 100f));
     }
 }
