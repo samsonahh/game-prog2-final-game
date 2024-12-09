@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,15 +11,9 @@ public class Player : MonoBehaviour
     [Header("Local Multiplayer Settings")]
     [SerializeField] private bool isPlayerOne = true;
 
-    [Header("Snowball Growth Settings")]
-    [SerializeField] private float snowballGrowthSpeed = 0.5f;
-    private float currentScale;
-    private float startingScale;
-
     [Header("Push Settings")]
-    [SerializeField] private float pushDamagePercent = 10f;
-    [SerializeField] private float basePushForce = 5f;
-    [SerializeField] private float pushForceLinearGrowth = 1f;
+    [SerializeField] private float pushForce = 5f;
+    public Action<Player> OnTouchOtherPlayer = delegate { };
 
     [Header("Movement Settings")]
     [SerializeField] private float baseMoveSpeed = 3f;
@@ -41,10 +36,12 @@ public class Player : MonoBehaviour
         Dead
     }
     
-    [field: SerializeField] public State CurrentState { get; private set; }
+    public State CurrentState { get; private set; }
 
-    private void ChangeState(State newState)
+    private void ChangeState(State newState, bool willForceChange = false)
     {
+        if (!willForceChange && CurrentState == newState) return;
+
         OnExitState(CurrentState);
         CurrentState = newState;
         OnEnterState(CurrentState);
@@ -107,8 +104,6 @@ public class Player : MonoBehaviour
                     return;
                 }
 
-                currentScale += snowballGrowthSpeed * Time.deltaTime;
-
                 break;
             case State.Stunned:
                 break;
@@ -146,17 +141,12 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
-        currentScale = transform.localScale.x;
-        startingScale = currentScale;
-
-        ChangeState(State.Idle);
+        ChangeState(State.Idle, true);
     }
 
     private void Update()
     {
         UpdateState(CurrentState);
-
-        HandleCurrentScale();
     }
 
     private void FixedUpdate()
@@ -170,11 +160,9 @@ public class Player : MonoBehaviour
         {
             Vector3 directionToOtherPlayer = (otherPlayer.transform.position - transform.position).normalized;
 
-            // if not attacking, don't push other player
-            if (CurrentState == State.Idle || Vector3.Dot(movementDirection, directionToOtherPlayer) < 0) return;
+            otherPlayer.Push(directionToOtherPlayer, pushForce);
 
-            otherPlayer.Push(directionToOtherPlayer, basePushForce + currentScale * pushForceLinearGrowth);
-            otherPlayer.TakeDamage(pushDamagePercent);
+            OnTouchOtherPlayer?.Invoke(otherPlayer);
         }
     }
 
@@ -210,14 +198,11 @@ public class Player : MonoBehaviour
 
     private void ApplyMovement()
     {
-        rigidBody.MovePosition(transform.position + Time.fixedDeltaTime * totalMoveSpeed * movementDirection);
-    }
+        float angle = Mathf.Atan2(movementDirection.x, movementDirection.z) * Mathf.Rad2Deg + Camera.main.transform.rotation.eulerAngles.y;
+        Quaternion targetRotation = Quaternion.Euler(0f, angle, 0f);
+        Vector3 targetForwardDirection = targetRotation * Vector3.forward;
 
-    private void HandleCurrentScale()
-    {
-        transform.localScale = currentScale * Vector3.one;
-
-        rigidBody.mass = 4f/3f * Mathf.PI * Mathf.Pow(currentScale/2f, 3);
+        rigidBody.MovePosition(transform.position + Time.fixedDeltaTime * totalMoveSpeed * targetForwardDirection);
     }
 
     /// <summary>
@@ -228,10 +213,5 @@ public class Player : MonoBehaviour
     public void Push(Vector3 direction, float force)
     {
         rigidBody.AddForce(force * direction.normalized, ForceMode.Impulse);
-    }
-
-    public void TakeDamage(float damagePercent)
-    {
-        currentScale = Mathf.Max(startingScale, currentScale * (1f - damagePercent / 100f));
     }
 }
