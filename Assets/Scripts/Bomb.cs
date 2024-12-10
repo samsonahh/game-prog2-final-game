@@ -48,6 +48,8 @@ public class Bomb : MonoBehaviour
     {
         yield return null;
 
+        CameraShaker.Instance.ShakeCamera(6f, 0.2f);
+
         holder.OnTouchOtherPlayer -= Player_OnTouchOtherPlayer;
 
         holder = newHolder;
@@ -59,11 +61,13 @@ public class Bomb : MonoBehaviour
     {
         if (holder == null) return;
 
-        transform.position = holder.transform.position;
+        transform.position = holder.transform.position + Vector3.up;
     }
 
     private void Explode()
     {
+        CameraShaker.Instance.ShakeCamera(12f, 0.2f);
+
         holder.OnTouchOtherPlayer -= Player_OnTouchOtherPlayer;
 
         gameManager.OnBombExplode(holder);

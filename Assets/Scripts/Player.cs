@@ -16,9 +16,9 @@ public class Player : MonoBehaviour
     public Action<Player> OnTouchOtherPlayer = delegate { };
 
     [Header("Movement Settings")]
-    [SerializeField] private float baseMoveSpeed = 3f;
-    private float moveSpeedModifier = 1f;
-    private float totalMoveSpeed => baseMoveSpeed * moveSpeedModifier;
+    [SerializeField] private float moveForce = 7.5f;
+    [SerializeField] private float maxSpeed = 10f;
+    [SerializeField] private float friction = 5f;
     private Vector3 movementDirection;
 
     [Header("Stun Settings")]
@@ -88,6 +88,8 @@ public class Player : MonoBehaviour
             case State.Idle:
                 HandleMovementInput();
 
+                rigidBody.velocity = Vector3.Lerp(rigidBody.velocity, Vector3.zero, friction * Time.deltaTime);
+
                 if (movementDirection != Vector3.zero)
                 {
                     ChangeState(State.Move);
@@ -98,7 +100,12 @@ public class Player : MonoBehaviour
             case State.Move:
                 HandleMovementInput();
 
-                if(movementDirection == Vector3.zero)
+                //if(movementDirection.x == 0) rigidBody.velocity = Vector3.Lerp(rigidBody.velocity, new Vector3(0, 0, rigidBody.velocity.z), friction * Time.deltaTime);
+                //if(movementDirection.z == 0) rigidBody.velocity = Vector3.Lerp(rigidBody.velocity, new Vector3(rigidBody.velocity.x, 0, 0), friction * Time.deltaTime);
+
+                rigidBody.velocity = Vector3.ClampMagnitude(rigidBody.velocity, maxSpeed);
+
+                if (movementDirection == Vector3.zero)
                 {
                     ChangeState(State.Idle);
                     return;
@@ -202,7 +209,7 @@ public class Player : MonoBehaviour
         Quaternion targetRotation = Quaternion.Euler(0f, angle, 0f);
         Vector3 targetForwardDirection = targetRotation * Vector3.forward;
 
-        rigidBody.MovePosition(transform.position + Time.fixedDeltaTime * totalMoveSpeed * targetForwardDirection);
+        rigidBody.AddForce(moveForce * targetForwardDirection);
     }
 
     /// <summary>
