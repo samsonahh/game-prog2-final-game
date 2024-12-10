@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -13,7 +11,7 @@ public class Player : MonoBehaviour
 
     [Header("Push Settings")]
     [SerializeField] private float pushForce = 5f;
-    public Action<Player> OnTouchOtherPlayer = delegate { };
+    public Action<Player, Vector3> OnTouchOtherPlayer = delegate { };
 
     [Header("Movement Settings")]
     [SerializeField] private float moveForce = 7.5f;
@@ -169,7 +167,7 @@ public class Player : MonoBehaviour
 
             otherPlayer.Push(directionToOtherPlayer, pushForce);
 
-            OnTouchOtherPlayer?.Invoke(otherPlayer);
+            OnTouchOtherPlayer?.Invoke(otherPlayer, collision.contacts[0].point);
         }
     }
 

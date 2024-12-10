@@ -281,8 +281,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7328150047878336449, guid: 3c706b507e187144999abbef8d86f8af, type: 3}
       propertyPath: bombDuration
-      value: 3
+      value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 7328150047878336449, guid: 3c706b507e187144999abbef8d86f8af, type: 3}
+      propertyPath: poofVFXPrefab
+      value: 
+      objectReference: {fileID: 915310253350491349, guid: 2d86a3653b261e84f8863fb6015ea36d, type: 3}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3c706b507e187144999abbef8d86f8af, type: 3}
 --- !u!114 &347294769 stripped

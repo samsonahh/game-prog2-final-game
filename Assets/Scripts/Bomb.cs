@@ -1,16 +1,25 @@
-    using System.Collections;
+using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Bomb : MonoBehaviour
 {
     private GameManager gameManager;
+    private Material bodyMaterial;
 
     private Player holder;
+
+    [Header("References")]
+    [SerializeField] private GameObject explosionVFXPrefab;
+    [SerializeField] private GameObject poofVFXPrefab;
 
     [Header("Settings")]
     [SerializeField] private float bombDuration = 15f;
     private float bombTimer = 0f;
+    [SerializeField] private float baseTickRate = 1f;
+    private float tickRate;
+    private float tickTimer = 0f;
 
     public void Init(Player newHolder)
     {
@@ -19,15 +28,30 @@ public class Bomb : MonoBehaviour
         bombTimer = 0f;
 
         holder.OnTouchOtherPlayer += Player_OnTouchOtherPlayer;
+
+        tickRate = baseTickRate/2;
+        tickTimer = 0f;
+
+        DOTween.To(() => tickRate, x => tickRate = x, 0.05f, bombDuration).SetId("Tick");
     }
 
     private void Awake()
     {
         gameManager = FindObjectOfType<GameManager>();
+        bodyMaterial = GetComponent<Renderer>().material;
     }
 
     private void Update()
     {
+        tickTimer += Time.deltaTime;
+
+        if(tickTimer > tickRate)
+        {
+            tickTimer = 0f;
+
+            bodyMaterial.color = bodyMaterial.color == Color.black ? Color.red : Color.black;
+        }
+
         bombTimer += Time.deltaTime;
 
         if(bombTimer > bombDuration)
@@ -39,16 +63,18 @@ public class Bomb : MonoBehaviour
         AttachToHolder();
     }
 
-    private void Player_OnTouchOtherPlayer(Player otherPlayer)
+    private void Player_OnTouchOtherPlayer(Player otherPlayer, Vector3 contactPoint)
     {
-        StartCoroutine(SwitchHolderCoroutine(otherPlayer));
+        StartCoroutine(SwitchHolderCoroutine(otherPlayer, contactPoint));
     }
 
-    private IEnumerator SwitchHolderCoroutine(Player newHolder)
+    private IEnumerator SwitchHolderCoroutine(Player newHolder, Vector3 contactPoint)
     {
         yield return null;
 
         CameraShaker.Instance.ShakeCamera(6f, 0.2f);
+
+        Instantiate(poofVFXPrefab, contactPoint, Quaternion.identity);
 
         holder.OnTouchOtherPlayer -= Player_OnTouchOtherPlayer;
 
@@ -68,9 +94,14 @@ public class Bomb : MonoBehaviour
     {
         CameraShaker.Instance.ShakeCamera(12f, 0.2f);
 
+        Instantiate(explosionVFXPrefab, transform.position, Quaternion.identity);
+
         holder.OnTouchOtherPlayer -= Player_OnTouchOtherPlayer;
 
         gameManager.OnBombExplode(holder);
+
+        DOTween.Kill("Tick");
+        bodyMaterial.color = Color.black;
 
         holder.gameObject.SetActive(false);
         gameObject.SetActive(false);

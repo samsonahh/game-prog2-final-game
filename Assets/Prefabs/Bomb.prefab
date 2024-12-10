@@ -46,6 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7282ef690a1ad4648ab97b0b89b90644, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  explosionVFXPrefab: {fileID: 915310253350491349, guid: 4e5982b8e3270854b95b0d606b90a6bf, type: 3}
   bombDuration: 15
 --- !u!33 &105832714552799596
 MeshFilter:
