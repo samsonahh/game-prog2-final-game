@@ -35,7 +35,7 @@ public class Bomb : MonoBehaviour
 
         DOTween.KillAll();
 
-        DOTween.To(() => tickRate, x => tickRate = x, 0.1f, bombDuration).SetId("Tick");
+        DOTween.To(() => tickRate, x => tickRate = x, 0.05f, bombDuration).SetId("Tick");
 
         transform.localScale = Vector3.one;
         targetBodyColor = Color.black;
@@ -78,6 +78,7 @@ public class Bomb : MonoBehaviour
         CameraShaker.Instance.ShakeCamera(6f, 0.2f);
 
         Instantiate(poofVFXPrefab, contactPoint, Quaternion.identity);
+        AudioManager.Instance.Play(AudioManager.Instance.ContactSFX, contactPoint, 0.25f, Random.Range(0.9f, 1.1f));
 
         holder.OnTouchOtherPlayer -= Player_OnTouchOtherPlayer;
 
@@ -98,6 +99,7 @@ public class Bomb : MonoBehaviour
         CameraShaker.Instance.ShakeCamera(12f, 0.2f);
 
         Instantiate(explosionVFXPrefab, transform.position, Quaternion.identity);
+        AudioManager.Instance.Play(AudioManager.Instance.ExplosionSFX, transform.position, 0.25f, Random.Range(0.9f, 1.1f));
 
         holder.OnTouchOtherPlayer -= Player_OnTouchOtherPlayer;
 
@@ -126,6 +128,11 @@ public class Bomb : MonoBehaviour
                 .SetEase(Ease.OutQuint)
                 .SetId("Color");
             targetBodyColor = targetBodyColor == Color.black ? Color.red : Color.black;
+
+            if(targetBodyColor == Color.red)
+            {
+                AudioManager.Instance.Play(AudioManager.Instance.BeepSFX, transform.position, 0.15f, Mathf.Lerp(1f, 1.25f, bombTimer/bombDuration));
+            }
             
             transform.DOScale(transform.localScale == Vector3.one ? 1.1f * Vector3.one : Vector3.one, tickRate).SetEase(Ease.OutQuint);
         }

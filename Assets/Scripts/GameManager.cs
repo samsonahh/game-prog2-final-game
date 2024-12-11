@@ -64,10 +64,16 @@ public class GameManager : MonoBehaviour
             case State.Intermission:
                 IntermissionTimer = 0;
                 Time.timeScale = 0f;
+
                 ResetPlayers();
+
+                StartCoroutine(IntermissionTicking());
                 break;
             case State.Playing:
                 Time.timeScale = 1f;
+
+                AudioManager.Instance.Play(AudioManager.Instance.StartSFX, Vector3.zero, 0.15f, 0.7f);
+
                 GiveBombToRandomPlayer();
                 break;
             case State.RoundEnd:
@@ -76,6 +82,8 @@ public class GameManager : MonoBehaviour
                 break;
             case State.GameOver:
                 Time.timeScale = 0f;
+
+                AudioManager.Instance.Play(AudioManager.Instance.GameOverSFX, Vector3.zero, 0.2f);
                 break;
             default:
                 break;
@@ -124,7 +132,11 @@ public class GameManager : MonoBehaviour
             case State.RoundEnd:
                 if (RoundEndTimer >= RoundEndDuration)
                 {
-                    if (CurrentRound >= Rounds)
+                    if (Player1Score == Rounds / 2 + 1 || Player2Score == Rounds / 2 + 1)
+                    {
+                        ChangeState(State.GameOver);
+                    }
+                    else if(CurrentRound >= Rounds)
                     {
                         ChangeState(State.GameOver);
                     }
@@ -173,7 +185,7 @@ public class GameManager : MonoBehaviour
 
     public void OnBombExplode(Player victim)
     {
-        if(victim == player1)
+        if (victim == player1)
         {
             Player2Score++;
             CurrentRoundWinner = 2;
@@ -202,6 +214,15 @@ public class GameManager : MonoBehaviour
 
     private Vector3 GetRandomPosition()
     {
-       return new Vector3(UnityEngine.Random.Range(-playFieldWidth, playFieldWidth), 0f, UnityEngine.Random.Range(-playFieldHeight, playFieldHeight));
+        return new Vector3(UnityEngine.Random.Range(-playFieldWidth, playFieldWidth), 0f, UnityEngine.Random.Range(-playFieldHeight, playFieldHeight));
+    }
+
+    private IEnumerator IntermissionTicking()
+    {
+        while (CurrentState == State.Intermission)
+        {
+            AudioManager.Instance.Play(AudioManager.Instance.TickSFX, Vector3.zero, 0.25f, UnityEngine.Random.Range(0.9f, 1.1f));
+            yield return new WaitForSecondsRealtime(1f);
+        }
     }
 }
