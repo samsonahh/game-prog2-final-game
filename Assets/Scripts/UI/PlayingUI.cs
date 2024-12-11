@@ -10,6 +10,7 @@ public class PlayingUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private TMP_Text player1ScoreText;
     [SerializeField] private TMP_Text player2ScoreText;
+    [SerializeField] private TMP_Text roundText;
 
     private void Awake()
     {
@@ -20,5 +21,6 @@ public class PlayingUI : MonoBehaviour
     {
         player1ScoreText.text = gameManager.Player1Score.ToString();
         player2ScoreText.text = gameManager.Player2Score.ToString();
+        roundText.text = $"{Mathf.Clamp(gameManager.CurrentRound + 1, 0, gameManager.Rounds)}/{gameManager.Rounds}";
     }
 }

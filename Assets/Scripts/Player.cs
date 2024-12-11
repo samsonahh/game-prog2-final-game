@@ -1,3 +1,4 @@
+using DG.Tweening;
 using System;
 using UnityEngine;
 
@@ -17,20 +18,18 @@ public class Player : MonoBehaviour
     [SerializeField] private float moveForce = 7.5f;
     [SerializeField] private float maxSpeed = 10f;
     [SerializeField] private float friction = 5f;
+    [SerializeField] private float rotationSpeed = 10f;
     private Vector3 movementDirection;
-
-    [Header("Stun Settings")]
-    [SerializeField] private float stunDuration = 1f;
+    [SerializeField] private GameObject walkVFXObject;
 
     [Header("Death Settings")]
-    [SerializeField] private float deathDuration = 1f;
+    [SerializeField] private float deathDuration = 0.5f;
 
     #region State Machine
     public enum State
     {
         Idle,
         Move,
-        Stunned,
         Dead
     }
     
@@ -52,10 +51,17 @@ public class Player : MonoBehaviour
             case State.Idle:
                 break;
             case State.Move:
-                break;
-            case State.Stunned:
+                walkVFXObject.SetActive(true);
+                DOTween.Kill(transform);
+                transform.DOMoveY(0.2f, 0.1f)
+                    .SetLoops(int.MaxValue, LoopType.Yoyo);
                 break;
             case State.Dead:
+                rigidBody.velocity = Vector3.zero;
+                transform.DOScale(Vector3.zero, deathDuration)
+                    .SetUpdate(true)
+                    .SetEase(Ease.OutQuint)
+                    .OnComplete(() => { gameObject.SetActive(false); });
                 break;
             default:
                 break;
@@ -69,8 +75,10 @@ public class Player : MonoBehaviour
             case State.Idle:
                 break;
             case State.Move:
-                break;
-            case State.Stunned:
+                walkVFXObject.SetActive(false);
+                DOTween.Kill(transform);
+                transform.DOMoveY(0, 0.2f)
+                    .SetEase(Ease.OutQuint);
                 break;
             case State.Dead:
                 break;
@@ -110,8 +118,6 @@ public class Player : MonoBehaviour
                 }
 
                 break;
-            case State.Stunned:
-                break;
             case State.Dead:
                 break;
             default:
@@ -129,8 +135,6 @@ public class Player : MonoBehaviour
             case State.Move:
                 ApplyMovement();
                 break;
-            case State.Stunned:
-                break;
             case State.Dead:
                 break;
             default:
@@ -146,6 +150,21 @@ public class Player : MonoBehaviour
 
     private void Start()
     {
+        ChangeState(State.Idle, true);
+    }
+
+    public void ResetPlayer()
+    {
+        transform.localScale = Vector3.zero;
+
+        transform.DOScale(Vector3.one, deathDuration)
+            .SetUpdate(true)
+            .SetEase(Ease.OutQuint);
+
+        rigidBody.velocity = Vector3.zero;
+
+        transform.rotation = Quaternion.Euler(0f, Camera.main.transform.rotation.eulerAngles.y + 180f, 0f);
+
         ChangeState(State.Idle, true);
     }
 
@@ -173,6 +192,12 @@ public class Player : MonoBehaviour
 
     private void HandleMovementInput()
     {
+        if (Time.timeScale == 0)
+        {
+            movementDirection = Vector3.zero;
+            return;
+        }
+
         Vector3 direction = Vector3.zero;
 
         if (isPlayerOne) // adjusts movementDirection based on WASD inputs
@@ -207,6 +232,8 @@ public class Player : MonoBehaviour
         Quaternion targetRotation = Quaternion.Euler(0f, angle, 0f);
         Vector3 targetForwardDirection = targetRotation * Vector3.forward;
 
+        rigidBody.MoveRotation(Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime));
+
         rigidBody.AddForce(moveForce * targetForwardDirection);
     }
 
@@ -218,5 +245,10 @@ public class Player : MonoBehaviour
     public void Push(Vector3 direction, float force)
     {
         rigidBody.AddForce(force * direction.normalized, ForceMode.Impulse);
+    }
+
+    public void Kill()
+    {
+        ChangeState(State.Dead, true);
     }
 }

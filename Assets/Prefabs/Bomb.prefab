@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &5415373691755777380
 Transform:
   m_ObjectHideFlags: 0
@@ -47,7 +47,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   explosionVFXPrefab: {fileID: 915310253350491349, guid: 4e5982b8e3270854b95b0d606b90a6bf, type: 3}
+  poofVFXPrefab: {fileID: 915310253350491349, guid: 2d86a3653b261e84f8863fb6015ea36d, type: 3}
   bombDuration: 15
+  baseTickRate: 1
 --- !u!33 &105832714552799596
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -76,7 +78,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d1575a79b8f09d543b7880a9945e26bf, type: 2}
+  - {fileID: 2100000, guid: 9146dde4613546541822e43f0ed163a8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

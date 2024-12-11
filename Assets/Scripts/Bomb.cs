@@ -20,6 +20,7 @@ public class Bomb : MonoBehaviour
     [SerializeField] private float baseTickRate = 1f;
     private float tickRate;
     private float tickTimer = 0f;
+    private Color targetBodyColor;
 
     public void Init(Player newHolder)
     {
@@ -29,10 +30,16 @@ public class Bomb : MonoBehaviour
 
         holder.OnTouchOtherPlayer += Player_OnTouchOtherPlayer;
 
-        tickRate = baseTickRate/2;
+        tickRate = baseTickRate;
         tickTimer = 0f;
 
-        DOTween.To(() => tickRate, x => tickRate = x, 0.05f, bombDuration).SetId("Tick");
+        DOTween.KillAll();
+
+        DOTween.To(() => tickRate, x => tickRate = x, 0.1f, bombDuration).SetId("Tick");
+
+        transform.localScale = Vector3.one;
+        targetBodyColor = Color.black;
+        SetColor(Color.black);
     }
 
     private void Awake()
@@ -43,14 +50,7 @@ public class Bomb : MonoBehaviour
 
     private void Update()
     {
-        tickTimer += Time.deltaTime;
-
-        if(tickTimer > tickRate)
-        {
-            tickTimer = 0f;
-
-            bodyMaterial.color = bodyMaterial.color == Color.black ? Color.red : Color.black;
-        }
+        HandleBombTickingVisual();
 
         bombTimer += Time.deltaTime;
 
@@ -59,7 +59,10 @@ public class Bomb : MonoBehaviour
             Explode();
             return;
         }
+    }
 
+    private void FixedUpdate()
+    {
         AttachToHolder();
     }
 
@@ -87,7 +90,7 @@ public class Bomb : MonoBehaviour
     {
         if (holder == null) return;
 
-        transform.position = holder.transform.position + Vector3.up;
+        transform.position = Vector3.Lerp(transform.position, holder.transform.position + 1.25f * Vector3.up, 100f * Time.fixedDeltaTime);
     }
 
     private void Explode()
@@ -101,9 +104,35 @@ public class Bomb : MonoBehaviour
         gameManager.OnBombExplode(holder);
 
         DOTween.Kill("Tick");
-        bodyMaterial.color = Color.black;
+        targetBodyColor = Color.black;
+        SetColor(Color.black);
 
-        holder.gameObject.SetActive(false);
+        holder.Kill();
         gameObject.SetActive(false);
+    }
+
+    private void HandleBombTickingVisual()
+    {
+        tickTimer += Time.deltaTime;
+
+        if (tickTimer > tickRate)
+        {
+            tickTimer = 0f;
+
+            DOTween.Kill("Color");
+            DOTween.Kill(transform);
+
+            DOVirtual.Color(targetBodyColor, targetBodyColor == Color.black ? Color.red : Color.black, tickRate, color => SetColor(color))
+                .SetEase(Ease.OutQuint)
+                .SetId("Color");
+            targetBodyColor = targetBodyColor == Color.black ? Color.red : Color.black;
+            
+            transform.DOScale(transform.localScale == Vector3.one ? 1.1f * Vector3.one : Vector3.one, tickRate).SetEase(Ease.OutQuint);
+        }
+    }
+
+    private void SetColor(Color color)
+    {
+        bodyMaterial.SetColor("_BaseColor", color);
     }
 }

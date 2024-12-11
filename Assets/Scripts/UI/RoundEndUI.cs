@@ -19,7 +19,7 @@ public class RoundEndUI : MonoBehaviour
 
     private void Start()
     {
-        gameObject.SetActive(false);
+        
     }
 
     private void GameManager_OnStateChange(GameManager.State newState)
@@ -30,6 +30,7 @@ public class RoundEndUI : MonoBehaviour
 
             string winner = gameManager.CurrentRoundWinner == 1 ? "Player 1" : "Player 2";
             winnerText.text = $"{winner} Stands";
+            winnerText.color = gameManager.CurrentRoundWinner == 1 ? gameManager.Player1Color : gameManager.Player2Color;
         }
         else
         {

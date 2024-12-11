@@ -21,7 +21,7 @@ public class IntermissionUI : MonoBehaviour
 
     private void Start()
     {
-        
+
     }
 
     private void GameManager_OnStateChange(GameManager.State newState)

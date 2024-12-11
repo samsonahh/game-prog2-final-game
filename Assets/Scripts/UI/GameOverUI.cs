@@ -25,7 +25,7 @@ public class GameOverUI : MonoBehaviour
 
     private void Start()
     {
-        gameObject.SetActive(false);
+        
     }
 
     private void GameManager_OnStateChange(GameManager.State newState)
@@ -35,6 +35,7 @@ public class GameOverUI : MonoBehaviour
             gameObject.SetActive(true);
 
             winnerText.text = gameManager.Player1Score > gameManager.Player2Score ? "Player 1 Wins!" : "Player 2 Wins!";
+            winnerText.color = gameManager.Player1Score > gameManager.Player2Score ? gameManager.Player1Color : gameManager.Player2Color;
         }
         else
         {

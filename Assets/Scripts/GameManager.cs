@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
     [Header("Player Settings")]
     [SerializeField] private Player player1;
     [SerializeField] private Player player2;
+    [field: SerializeField] public Color Player1Color { get; private set; }
+    [field: SerializeField] public Color Player2Color { get; private set; }
     [SerializeField] private float playFieldWidth = 5f;
     [SerializeField] private float playFieldHeight = 5f;
     public int CurrentRoundWinner { get; private set; }
@@ -25,12 +27,12 @@ public class GameManager : MonoBehaviour
 
     [field: Header("Intermission Settings")]
     [field: SerializeField] public int IntermissionDuration { get; private set; } = 3;
-    [field: SerializeField] public float IntermissionTimer { get; private set; } = 0f;
+    public float IntermissionTimer { get; private set; } = 0f;
     private bool isFirstFrameOver = false;
 
     [field: Header("Round End Settings")]
     [field: SerializeField] public int RoundEndDuration { get; private set; } = 1;
-    [field: SerializeField] public float RoundEndTimer { get; private set; } = 0f;
+    public float RoundEndTimer { get; private set; } = 0f;
 
     #region State Machine
     public enum State
@@ -41,7 +43,7 @@ public class GameManager : MonoBehaviour
         GameOver
     }
 
-    [field: SerializeField] public State CurrentState { get; private set; }
+    public State CurrentState { get; private set; }
     public Action<State> OnStateChange = delegate { };
 
     private void ChangeState(State newState, bool willForceChange = false)
@@ -193,6 +195,9 @@ public class GameManager : MonoBehaviour
 
         player1.gameObject.SetActive(true);
         player2.gameObject.SetActive(true);
+
+        player1.ResetPlayer();
+        player2.ResetPlayer();
     }
 
     private Vector3 GetRandomPosition()
